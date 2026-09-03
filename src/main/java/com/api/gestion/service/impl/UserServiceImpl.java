@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.api.gestion.dao.UserDAO;
+import com.api.gestion.pojo.User;
 import com.api.gestion.service.UserService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -20,10 +21,15 @@ public class UserServiceImpl implements UserService {
 	private UserDAO userDAO;
 
 	@Override
-	public ResponseEntity<String> signUp(Map<String, String> rquestMap) {
+	public ResponseEntity<String> signUp(Map<String, String> requestMap) {
 		return null;
 	}
 	
+	private User getUserFromMap(Map<String, String> requestMap) {
+		User user = new User();
+		user.setNombre(requestMap.get("nombre"));
+		user.setNumeroDeContacto(null);
+	}
 	
 
 }
