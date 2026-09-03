@@ -27,7 +27,7 @@ public class UserController {
     public ResponseEntity<String> registrarUsuario(@RequestBody(required = true) Map<String, String> requestMap){
         try {
             // Aqui se va mandar llamar al metodo registra un usuario del ServiceImpl
-            userService.signUp(requestMap);
+            return userService.signUp(requestMap);
         } catch (Exception exception) {
             exception.printStackTrace();
         }

@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
 import lombok.Data;
 
 
-@NamedQuery(name = "User.findByEmail", query = "select u from User where u.email=:email")
+@NamedQuery(name = "User.findByEmail", query = "select u from User u where u.email=:email")
 
 @Data
 @Entity
