@@ -39,6 +39,10 @@ public class UserServiceImpl implements UserService {
 				} else{
 					return FacturaUtils.getResponseEntity("El usuario con este email ya existe", HttpStatus.BAD_REQUEST);
 				}
+			} 
+			// Si la data es incorrecta
+			else{
+				return FacturaUtils.getResponseEntity(FacturaConstantes.INVALID_DATA, HttpStatus.BAD_REQUEST);
 			}
 		} catch (Exception exception) {
 			// TODO: handle exception
