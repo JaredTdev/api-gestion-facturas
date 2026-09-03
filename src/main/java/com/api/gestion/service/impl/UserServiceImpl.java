@@ -24,11 +24,24 @@ public class UserServiceImpl implements UserService {
 	public ResponseEntity<String> signUp(Map<String, String> requestMap) {
 		return null;
 	}
+
+	private boolean validateSignUpMap(Map<String, String> requestMap) {
+		if (requestMap.containsKey("nombre") && requestMap.containsKey("numeroDeContacto") &&
+				requestMap.containsKey("email") && requestMap.containsKey("password")) {
+			return true;
+		} 
+		return false;
+	}
 	
 	private User getUserFromMap(Map<String, String> requestMap) {
 		User user = new User();
 		user.setNombre(requestMap.get("nombre"));
-		user.setNumeroDeContacto(null);
+		user.setNumeroDeContacto(requestMap.get("numeroDeContacto"));
+		user.setEmail(requestMap.get("email"));
+		user.setPassword(requestMap.get("password"));
+		user.setStatus("false");
+		user.setRole("user");
+		return user;
 	}
 	
 
