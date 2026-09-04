@@ -3,6 +3,10 @@ package com.api.gestion.security.jwt;
 import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -43,8 +47,35 @@ public class JwtFilter extends OncePerRequestFilter {
                         username = jwtUtil.extractUsername(token);
                         claims = jwtUtil.extractAllClaims(token);
                     }
+
+                    // para vaidar token tenga las mismas credenciales que en userdetails.
+                    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                        UserDetails userDetails = customerDetailsService.loadUserByUsername(username);
+                        if (jwtUtil.validateToken(token, userDetails)) {
+                            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = 
+                                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                            new WebAuthenticationDetailsSource().buildDetails(request);
+                            SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                        }
+                    }
+                    filterChain.doFilter(request, response);
                 }
         throw new UnsupportedOperationException("Unimplemented method 'doFilterInternal'");
+    }
+    /* Metodo para verificar si el usuario es admin
+     */
+    public boolean isAdmin() {
+        return "admin".equalsIgnoreCase((String) claims.get("role"));
+    }
+
+    // Metodo para validar si es usuario
+    public  boolean isUser() {
+        return "user".equalsIgnoreCase((String) claims.get("role"));
+    }
+
+    // Metodo para revisar el tipo de usuario actual
+    public String getCurrentUSer() {
+        return username;
     }
     
 }
