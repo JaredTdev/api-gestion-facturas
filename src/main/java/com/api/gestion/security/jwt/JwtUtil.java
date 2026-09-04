@@ -80,6 +80,7 @@ public class JwtUtil {
                 .signWith(Keys.hmacShaKeyFor(secret.getEncoded())).compact();
     }
 
+    // Metodo para validar token
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
