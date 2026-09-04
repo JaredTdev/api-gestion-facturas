@@ -36,5 +36,9 @@ public class CustomerDetailsService implements UserDetailsService{
             throw new UsernameNotFoundException("Usuario no encontrado");
         }
     }
+
+    public User getUserDetail() {
+        return userDetail;
+    }
     
 }
