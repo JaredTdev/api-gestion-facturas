@@ -23,9 +23,6 @@ import com.api.gestion.security.jwt.JwtFilter;
 public class SecurityConfig {
 
     @Autowired 
-    private CustomerDetailsService customerDetailsService;
-
-    @Autowired 
     private JwtFilter jwtFilter;
 
     @Bean 
@@ -40,9 +37,9 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(request -> {
                 request.requestMatchers("/user/login","/user/signup","/user/forgotPassword")
-                .permitAll()
-                .anyRequest()
-                .authenticated();
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated();
             })
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         httpSecurity.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
