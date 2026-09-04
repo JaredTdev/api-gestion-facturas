@@ -1,4 +1,4 @@
-package com.api.gestion.security.jwt;
+package com.api.gestion.security;
 
 import java.util.ArrayList;
 import java.util.Objects;
