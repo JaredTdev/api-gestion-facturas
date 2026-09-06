@@ -54,6 +54,8 @@ public class JwtUtil {
         return claimsResolver.apply(claims);
     }
 
+    /* Este método verifica y extrae todos los reclamos del token JWT. Utiliza la clave secreta para
+    verificar la firma del token y luego extrae los reclamos del payload.*/
     public Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(Keys.hmacShaKeyFor(secret.getEncoded()))
@@ -76,7 +78,8 @@ public class JwtUtil {
         return Jwts.builder()
                 .claims(claims)
                 .subject(subject)
-                .issuedAt(new Date(System.currentTimeMillis() + 100 * 60 * 60 * 10))
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + 100 * 60 * 60 * 10))
                 .signWith(Keys.hmacShaKeyFor(secret.getEncoded())).compact();
     }
 
