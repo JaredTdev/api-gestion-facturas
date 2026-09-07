@@ -91,7 +91,7 @@ public class UserServiceImpl implements UserService {
             Authentication authentication = authenticationManager.authenticate(
               new UsernamePasswordAuthenticationToken(requestMap.get("email"),requestMap.get("password"))
             );
-
+			// Admin debe estar su status en true para que te devuelva el token de acceso.
             if(authentication.isAuthenticated()){
               if(customerDetailsService.getUserDetail().getStatus().equalsIgnoreCase("true")){
                   return new ResponseEntity<String>(
