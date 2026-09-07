@@ -6,11 +6,16 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import com.api.gestion.constantes.FacturaConstantes;
 import com.api.gestion.dao.UserDAO;
 import com.api.gestion.pojo.User;
+import com.api.gestion.security.CustomerDetailsService;
+import com.api.gestion.security.jwt.JwtUtil;
 import com.api.gestion.service.UserService;
 import com.api.gestion.util.FacturaUtils;
 
@@ -23,6 +28,15 @@ public class UserServiceImpl implements UserService {
 	
 	@Autowired
 	private UserDAO userDAO;
+
+	@Autowired 
+	private  AuthenticationManager authenticationManager;
+
+	@Autowired 
+	private CustomerDetailsService customerDetailsService;
+
+	@Autowired 
+	private JwtUtil jwtUtil;
 
 	@Override
 	public ResponseEntity<String> signUp(Map<String, String> requestMap) {
@@ -69,6 +83,32 @@ public class UserServiceImpl implements UserService {
 		user.setRole("user");
 		return user;
 	}
+
+	@Override
+	public ResponseEntity<String> login(Map<String, String> requestMap) {
+        log.info("Dentro de login");
+        try{
+            Authentication authentication = authenticationManager.authenticate(
+              new UsernamePasswordAuthenticationToken(requestMap.get("email"),requestMap.get("password"))
+            );
+			// Admin debe estar su status en true para que te devuelva el token de acceso.
+            if(authentication.isAuthenticated()){
+              if(customerDetailsService.getUserDetail().getStatus().equalsIgnoreCase("true")){
+                  return new ResponseEntity<String>(
+                          "{\"token\":\"" +
+                                  jwtUtil.  generateToken(customerDetailsService.getUserDetail().getEmail(),
+                                  customerDetailsService.getUserDetail().getRole()) + "\"}",
+                          HttpStatus.OK);
+              }
+              else{
+                  return new ResponseEntity<String>("{\"mensaje\":\""+" Espera la aprobación del administrador "+"\"}",HttpStatus.BAD_REQUEST);
+              }
+            }
+        }catch (Exception exception){
+            log.error("{}",exception);
+        }
+        return new ResponseEntity<String>("{\"mensaje\":\""+" Credenciales incorrectas "+"\"}",HttpStatus.BAD_REQUEST);
+    }
 	
 
 }
