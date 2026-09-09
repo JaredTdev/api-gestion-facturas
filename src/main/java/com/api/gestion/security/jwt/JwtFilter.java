@@ -35,35 +35,33 @@ public class JwtFilter extends OncePerRequestFilter {
     private String username = null;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-                throws ServletException, IOException {
-        if (request.getServletPath().matches("/user/login|/user/forgotPassword|/user/signup")) {
-            filterChain.doFilter(request, response);
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        if(request.getServletPath().matches("/user/login|user/forgotPassword|/user/signup")){
+            filterChain.doFilter(request,response);
         }
-        else {
+        else{
             String authorizationHeader = request.getHeader("Authorization");
             String token = null;
 
-            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-                token = authorizationHeader.substring(7); // Es 7 por la cantidad de caracteres que esta usando "Bearer ".
+            if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")){
+                token = authorizationHeader.substring(7);
                 username = jwtUtil.extractUsername(token);
                 claims = jwtUtil.extractAllClaims(token);
             }
 
-            // para vaidar token tenga las mismas credenciales que en userdetails.
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
                 UserDetails userDetails = customerDetailsService.loadUserByUsername(username);
-                if (jwtUtil.validateToken(token, userDetails)) {
-                    UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = 
-                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                if(jwtUtil.validateToken(token,userDetails)){
+                    UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                            new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
                     new WebAuthenticationDetailsSource().buildDetails(request);
                     SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
                 }
             }
-            filterChain.doFilter(request, response);
+            filterChain.doFilter(request,response);
         }
-        
     }
+
     /* Metodo para verificar si el usuario es admin
      */
     public boolean isAdmin() {

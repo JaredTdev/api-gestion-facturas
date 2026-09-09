@@ -37,12 +37,12 @@ public class JwtUtil {
 
 
 
-    public String extractUsername(String token) {
-        return extractClaims(token, Claims::getSubject);
+    public String extractUsername(String token){
+        return extractClaims(token,Claims::getSubject);
     }
 
-    public Date extractExpiration(String token) {
-        return extractClaims(token, Claims::getExpiration);
+    public Date extractExpiration(String token){
+        return extractClaims(token,Claims::getExpiration);
     }
 
     /* 
