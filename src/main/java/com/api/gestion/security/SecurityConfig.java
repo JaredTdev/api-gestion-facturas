@@ -37,17 +37,17 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(request -> {
                 request.requestMatchers("/user/login","/user/signup","/user/forgotPassword")
-                    .permitAll()
-                    .anyRequest()
-                    .authenticated();
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated();
             })
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        httpSecurity.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        httpSecurity.addFilterBefore(jwtFilter,UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
     }
 
-    @Bean 
-    public AuthenticationManager authenticationManager (AuthenticationConfiguration authenticationConfiguration) throws Exception{
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception{
         return authenticationConfiguration.getAuthenticationManager();
     }
     

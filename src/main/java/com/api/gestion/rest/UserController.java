@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 @RequestMapping(path = "/user")
 public class UserController {
 
-    @Autowired
+    @Autowired 
     private UserService userService;
 
     @PostMapping("/signup")

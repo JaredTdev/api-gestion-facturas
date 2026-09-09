@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.api.gestion.constantes.FacturaConstantes;
@@ -38,6 +39,9 @@ public class UserServiceImpl implements UserService {
 	@Autowired 
 	private JwtUtil jwtUtil;
 
+	@Autowired
+    private PasswordEncoder passwordEncoder;
+
 	@Override
 	public ResponseEntity<String> signUp(Map<String, String> requestMap) {
 		log.info("Registro interno de un usuario {}", requestMap);; // Para que imprima valosres del Map
@@ -65,25 +69,6 @@ public class UserServiceImpl implements UserService {
 		return FacturaUtils.getResponseEntity(FacturaConstantes.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
-	private boolean validateSignUpMap(Map<String, String> requestMap) {
-		if (requestMap.containsKey("nombre") && requestMap.containsKey("numeroDeContacto") &&
-				requestMap.containsKey("email") && requestMap.containsKey("password")) {
-			return true;
-		} 
-		return false;
-	}
-	
-	private User getUserFromMap(Map<String, String> requestMap) {
-		User user = new User();
-		user.setNombre(requestMap.get("nombre"));
-		user.setNumeroDeContacto(requestMap.get("numeroDeContacto"));
-		user.setEmail(requestMap.get("email"));
-		user.setPassword(requestMap.get("password"));
-		user.setStatus("false");
-		user.setRole("user");
-		return user;
-	}
-
 	@Override
 	public ResponseEntity<String> login(Map<String, String> requestMap) {
         log.info("Dentro de login");
@@ -91,12 +76,12 @@ public class UserServiceImpl implements UserService {
             Authentication authentication = authenticationManager.authenticate(
               new UsernamePasswordAuthenticationToken(requestMap.get("email"),requestMap.get("password"))
             );
-			// Admin debe estar su status en true para que te devuelva el token de acceso.
+
             if(authentication.isAuthenticated()){
               if(customerDetailsService.getUserDetail().getStatus().equalsIgnoreCase("true")){
                   return new ResponseEntity<String>(
                           "{\"token\":\"" +
-                                  jwtUtil.  generateToken(customerDetailsService.getUserDetail().getEmail(),
+                                  jwtUtil.generateToken(customerDetailsService.getUserDetail().getEmail(),
                                   customerDetailsService.getUserDetail().getRole()) + "\"}",
                           HttpStatus.OK);
               }
@@ -105,9 +90,32 @@ public class UserServiceImpl implements UserService {
               }
             }
         }catch (Exception exception){
+			log.info(requestMap.get("email"));
+			log.info(customerDetailsService.getUserDetail().getEmail());
             log.error("{}",exception);
+			
+			//log.info((String) authenticationManager.authenticate(null).getCredentials());
         }
         return new ResponseEntity<String>("{\"mensaje\":\""+" Credenciales incorrectas "+"\"}",HttpStatus.BAD_REQUEST);
+    }
+
+		private boolean validateSignUpMap(Map<String, String> requestMap) {
+		if (requestMap.containsKey("nombre") && requestMap.containsKey("numeroDeContacto") &&
+				requestMap.containsKey("email") && requestMap.containsKey("password")) {
+			return true;
+		} 
+		return false;
+	}
+	
+	private User getUserFromMap(Map<String, String> requestMap){
+        User user = new User();
+        user.setNombre(requestMap.get("nombre"));
+        user.setNumeroDeContacto(requestMap.get("numeroDeContacto"));
+        user.setEmail(requestMap.get("email"));
+        user.setPassword(requestMap.get("password"));
+        user.setStatus("false");
+        user.setRole("user");
+        return user;
     }
 	
 
