@@ -71,40 +71,41 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public ResponseEntity<String> login(Map<String, String> requestMap) {
-        log.info("Dentro de login");
-        try{
+        log.info("Dentro del proceso de login para el email: {}", requestMap.get("email"));
+        try {
+            // 1. Spring Security valida el correo y la contraseña
             Authentication authentication = authenticationManager.authenticate(
-              new UsernamePasswordAuthenticationToken(requestMap.get("email"),requestMap.get("password"))
+              new UsernamePasswordAuthenticationToken(requestMap.get("email"), requestMap.get("password"))
             );
 
-            if(authentication.isAuthenticated()){
-              if(customerDetailsService.getUserDetail().getStatus().equalsIgnoreCase("true")){
-                  return new ResponseEntity<String>(
-                          "{\"token\":\"" +
-                                  jwtUtil.generateToken(customerDetailsService.getUserDetail().getEmail(),
-                                  customerDetailsService.getUserDetail().getRole()) + "\"}",
-                          HttpStatus.OK);
-              }
-              else{
-                  return new ResponseEntity<String>("{\"mensaje\":\""+" Espera la aprobación del administrador "+"\"}",HttpStatus.BAD_REQUEST);
-              }
+            // 2. Si las credenciales coinciden perfectamente
+            if(authentication.isAuthenticated()) {
+                
+                // Buscamos el usuario síncronamente en la BD usando tu DAO
+                User user = userDAO.findByEmail(requestMap.get("email"));
+
+                if (Objects.nonNull(user)) {
+                    // Validamos si la cuenta está aprobada
+                    if(user.getStatus().equalsIgnoreCase("true")) {
+                        
+                        // Generamos el token inyectando el rol dinámico obtenido de la BD ("admin" o "user")
+                        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+                        
+                        return new ResponseEntity<String>("{\"token\":\"" + token + "\"}", HttpStatus.OK);
+                    } else {
+                        return new ResponseEntity<String>("{\"mensaje\":\"Espera la aprobación del administrador\"}", HttpStatus.BAD_REQUEST);
+                    }
+                }
             }
-        }catch (Exception exception){
-			log.info(requestMap.get("email"));
-			log.info(customerDetailsService.getUserDetail().getEmail());
-            log.error("{}",exception);
-			
-			//log.info((String) authenticationManager.authenticate(null).getCredentials());
+        } catch (Exception exception) {
+            log.error("Fallo de autenticación para {}: ", requestMap.get("email"), exception);
         }
-        return new ResponseEntity<String>("{\"mensaje\":\""+" Credenciales incorrectas "+"\"}",HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<String>("{\"mensaje\":\"Credenciales incorrectas\"}", HttpStatus.BAD_REQUEST);
     }
 
-		private boolean validateSignUpMap(Map<String, String> requestMap) {
-		if (requestMap.containsKey("nombre") && requestMap.containsKey("numeroDeContacto") &&
-				requestMap.containsKey("email") && requestMap.containsKey("password")) {
-			return true;
-		} 
-		return false;
+	private boolean validateSignUpMap(Map<String, String> requestMap) {
+		return requestMap.containsKey("nombre") && requestMap.containsKey("numeroDeContacto") &&
+			   requestMap.containsKey("email") && requestMap.containsKey("password");
 	}
 	
 	private User getUserFromMap(Map<String, String> requestMap){
@@ -112,11 +113,16 @@ public class UserServiceImpl implements UserService {
         user.setNombre(requestMap.get("nombre"));
         user.setNumeroDeContacto(requestMap.get("numeroDeContacto"));
         user.setEmail(requestMap.get("email"));
-        user.setPassword(requestMap.get("password"));
-        user.setStatus("false");
-        user.setRole("user");
+        
+        // Encripta la contraseña usando BCrypt de forma obligatoria
+        user.setPassword(passwordEncoder.encode(requestMap.get("password")));
+        user.setStatus("false"); 
+        
+        if (requestMap.containsKey("role")) {
+            user.setRole(requestMap.get("role"));
+        } else {
+            user.setRole("user");
+        }
         return user;
     }
-	
-
 }

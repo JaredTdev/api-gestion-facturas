@@ -1,9 +1,12 @@
 package com.api.gestion.security.jwt;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -30,52 +33,63 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private CustomerDetailsService customerDetailsService;
 
-    Claims claims = null;
-
-    private String username = null;
-
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if(request.getServletPath().matches("/user/login|user/forgotPassword|/user/signup")){
-            filterChain.doFilter(request,response);
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) 
+            throws ServletException, IOException {
+        
+        if (request.getServletPath().matches("/user/login|/user/forgotPassword|/user/signup")) {
+            filterChain.doFilter(request, response);
+            return;
         }
-        else{
-            String authorizationHeader = request.getHeader("Authorization");
-            String token = null;
 
-            if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")){
-                token = authorizationHeader.substring(7);
-                username = jwtUtil.extractUsername(token);
-                claims = jwtUtil.extractAllClaims(token);
-            }
+        String authorizationHeader = request.getHeader("Authorization");
+        String token = null;
+        String username = null;
+        String role = null;
 
-            if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
-                UserDetails userDetails = customerDetailsService.loadUserByUsername(username);
-                if(jwtUtil.validateToken(token,userDetails)){
-                    UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                            new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
-                    new WebAuthenticationDetailsSource().buildDetails(request);
-                    SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-                }
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            token = authorizationHeader.substring(7);
+            username = jwtUtil.extractUsername(token);
+            
+            Claims claims = jwtUtil.extractAllClaims(token);
+            if (claims != null) {
+                role = (String) claims.get("role");
             }
-            filterChain.doFilter(request,response);
         }
+
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = customerDetailsService.loadUserByUsername(username);
+            
+            if (jwtUtil.validateToken(token, userDetails)) {
+                
+                String formatRole = role.startsWith("ROLE_") ? role.toUpperCase() : "ROLE_" + role.toUpperCase();
+                List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(formatRole));
+
+                UsernamePasswordAuthenticationToken authenticationToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+                
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            }
+        }
+        
+        filterChain.doFilter(request, response);
     }
 
-    /* Metodo para verificar si el usuario es admin
-     */
     public boolean isAdmin() {
-        return "admin".equalsIgnoreCase((String) claims.get("role"));
+        if (SecurityContextHolder.getContext().getAuthentication() == null) return false;
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
     }
 
-    // Metodo para validar si es usuario
-    public  boolean isUser() {
-        return "user".equalsIgnoreCase((String) claims.get("role"));
+    public boolean isUser() {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) return false;
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_USER"));
     }
 
-    // Metodo para revisar el tipo de usuario actual
-    public String getCurrentUSer() {
-        return username;
+    public String getCurrentUser() {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) return null;
+        return SecurityContextHolder.getContext().getAuthentication().getName();
     }
-    
 }
