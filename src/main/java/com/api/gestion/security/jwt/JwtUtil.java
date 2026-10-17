@@ -1,11 +1,14 @@
 package com.api.gestion.security.jwt;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.SecureRandom;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+
+import javax.crypto.SecretKey;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -18,47 +21,30 @@ import jakarta.annotation.PostConstruct;
 @Service
 public class JwtUtil {
 
-    // Clave secreta que nos servira como firma en el token
-    private Key secret;
+    private final String SECRET_KEY = "TuClaveSecretaSuperFijaYMuyLargaParaQueNoDeErrorDeFirma1234567890";
+    private SecretKey secret;
 
-    /*
-    Este metodo es anotado con @PostConstruct, lo que significa que se ejecutara despues de que la 
-    instancia de la clase haya sido construida y todas las dependencias hayan sido inyectadas.
-    En este metodo, se inicializa la clave secreta que se utilizara para firmar y verificar los 
-    tokens JWT. Se genera una clave aleatoria utilizando SecureRandom() y se asigna a la variable secret.
-     */
     @PostConstruct
     protected void init() {
-        byte[] apiKeySecretBytes = new byte[64]; // 512 bits
-        new SecureRandom().nextBytes(apiKeySecretBytes);
-        secret = Keys.hmacShaKeyFor(apiKeySecretBytes);
+        this.secret = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
     }
 
-
-
-
-    public String extractUsername(String token){
-        return extractClaims(token,Claims::getSubject);
+    public String extractUsername(String token) {
+        return extractClaims(token, Claims::getSubject);
     }
 
-    public Date extractExpiration(String token){
-        return extractClaims(token,Claims::getExpiration);
+    public Date extractExpiration(String token) {
+        return extractClaims(token, Claims::getExpiration);
     }
 
-    /* 
-    Este metodo verifica y extrae todos los reclamos del JWT. Utiliza la clave secreta para
-    verificar la firma del token y luego extrae los reclamos del payload.
-     */
     public <T> T extractClaims(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    /* Este método verifica y extrae todos los reclamos del token JWT. Utiliza la clave secreta para
-    verificar la firma del token y luego extrae los reclamos del payload.*/
     public Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .verifyWith(Keys.hmacShaKeyFor(secret.getEncoded()))
+                .verifyWith(secret)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
@@ -70,7 +56,7 @@ public class JwtUtil {
 
     public String generateToken(String username, String role) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", role);
+        claims.put("role", role); 
         return createToken(claims, username);
     }
 
@@ -79,14 +65,13 @@ public class JwtUtil {
                 .claims(claims)
                 .subject(subject)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 100 * 60 * 60 * 10))
-                .signWith(Keys.hmacShaKeyFor(secret.getEncoded())).compact();
+                .expiration(new Date(System.currentTimeMillis() + 36000000)) // 10 Horas
+                .signWith(secret)
+                .compact();
     }
 
-    // Metodo para validar token
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
-    
 }
