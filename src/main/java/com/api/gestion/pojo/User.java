@@ -12,21 +12,20 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 
-//@NamedQuery(name = "User.findByEmail", query = "select u from User u where u.email=:email")
-@NamedQuery(name = "User.findByEmail",query = "select u from User u where u.email=:email")
-//@NamedQuery(name = "User.getAllUsers",query = "select new com.api.gestion.wrapper.UserWrapper(u.id,u.nombre,u.email,u.numeroDeContacto,u.status) from User u where u.role='user'")
-@NamedQuery(name = "User.updateStatus",query = "update User u set u.status=:status where u.id=:id")
-@NamedQuery(name = "User.getAllAdmins",query = "select u.email from User u where u.role='admin'")
+@NamedQuery(name = "User.findByEmail", query = "select u from User u where u.email=:email")
+@NamedQuery(name = "User.updateStatus", query = "update User u set u.status=:status where u.id=:id")
+@NamedQuery(name = "User.getAllAdmins", query = "select u.email from User u where u.role='admin'")
 
-@Data
 @Entity
 @DynamicUpdate
 @DynamicInsert
 @Table(name = "users")
-public class User implements Serializable{
+public class User implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
 
@@ -52,4 +51,76 @@ public class User implements Serializable{
 	@Column(name = "role")
 	private String role;
 
+	// Constructor vacío explícito requerido por Hibernate
+	public User() {
+	}
+
+	// Constructor completo explícito
+	public User(Integer id, String nombre, String numeroDeContacto, String email, String password, String status, String role) {
+		this.id = id;
+		this.nombre = nombre;
+		this.numeroDeContacto = numeroDeContacto;
+		this.email = email;
+		this.password = password;
+		this.status = status;
+		this.role = role;
+	}
+
+	// --- GETTERS Y SETTERS TRADICIONALES (MÉTODOS REALES EN CÓDIGO) ---
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public String getNombre() {
+		return nombre;
+	}
+
+	public void setNombre(String nombre) {
+		this.nombre = nombre;
+	}
+
+	public String getNumeroDeContacto() {
+		return numeroDeContacto;
+	}
+
+	public void setNumeroDeContacto(String numeroDeContacto) {
+		this.numeroDeContacto = numeroDeContacto;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public String getRole() {
+		return role;
+	}
+
+	public void setRole(String role) {
+		this.role = role;
+	}
 }
